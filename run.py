@@ -18,7 +18,7 @@ performance = [[] for each in programs]
 
 tests = []
 tests += [each for each in os.listdir("tests")]
-
+tests.sort()
 current_test = ""
 
 ##
@@ -41,7 +41,8 @@ def displaying():
   font = pygame.font.SysFont('Times New Roman', 25, True, False)
  
   # Set the height and width of the screen
-  size = (800, 500)
+  boardSizeX = 800
+  size = (boardSizeX, 500)
   screen = pygame.display.set_mode(size)
  
   pygame.display.set_caption("SAT Competetion")
@@ -67,16 +68,20 @@ def displaying():
     for i in range(0,len( programs_text)):
       screen.blit(programs_text[i], [25, 50+(i*25)])
       
-      offset = 0
+      xoffset = 0
+      yoffset = 0
       for j in range(0,len(performance[i])):
         if performance[i][j] == -1:
           c = RED
           size = 5
         else:
           c = GREEN 
-          size = 1/performance[i][j]
-        offset+=size
-        pygame.draw.line(screen, c, [175+offset, 50+(i*25)+15], [175+offset+size, 50+(i*25)+15], 15)
+          size = (1/performance[i][j])*100
+        if xoffset > boardSizeX:
+          yoffset += 25
+          xoffset = 0
+        pygame.draw.line(screen, c, [175+xoffset, 50+(i*25)+15+yoffset], [175+xoffset+size, 50+(i*25)+15+yoffset], 15)
+        xoffset+=size
 
     
     # Draw a rectangle
@@ -95,11 +100,10 @@ for t in tests:
   current_test = t
   for x in range(0,len(programs)):
     start = time.time()
-    res = subprocess.check_output("executables/"+programs[x]+" "+t,shell=True)
-    if (res == "sat"): 
-      performance[x] += [time.time()-start]
-    else:
+    result = subprocess.check_output("executables/"+programs[x]+" "+t,shell=True)
+    if "unsat" in result: 
       performance[x] += [-1]
-    print res
+    else:
+      performance[x] += [time.time()-start]
     time.sleep (1)
 
